@@ -138,7 +138,7 @@ for unreal_version in config.unreal_versions:
 
 if config.mkdocs_auto_deploy:
     print("Deploying documentation")
-    subprocess.run(rf'mkdocs gh-deploy --config-file "{os.path.join(config.mkdocs_path, "mkdocs.yml")}"')
+    subprocess.run(rf'mkdocs gh-deploy --force --config-file "{os.path.join(config.mkdocs_path, "mkdocs.yml")}"')
 
 if config.mkdocs_include_pdf:
     print("Copying documentation PDF to output directory")
