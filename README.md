@@ -45,6 +45,26 @@ The configuration for the tool is stored in the <code>unrealpackager.conf</code>
         <td>project</td>
         <td>Should the release also be added to a ZIP file? (default is True)</td>
     </tr>
+    <tr>
+        <td>path</td>
+        <td>mkdocs</td>
+        <td>The path to the directory where the mkdocs.yml file is stored</td>
+    </tr>
+    <tr>
+        <td>auto_deploy</td>
+        <td>mkdocs</td>
+        <td>Should the latest documentation automatically be deployed using the <code>mkdocs gh-deploy</code> command? (default is False)</td>
+    </tr>
+    <tr>
+        <td>include_pdf</td>
+        <td>mkdocs</td>
+        <td>Should the PDF documentation be included in the output directory? (default is False)</td>
+    </tr>
+    <tr>
+        <td>create_zip</td>
+        <td>mkdocs</td>
+        <td>Should the documentation also be added to a ZIP file? (default is False)</td>
+    </tr>
 <table>
 
 ## Using the tool
