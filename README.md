@@ -65,7 +65,40 @@ The configuration for the tool is stored in the <code>unrealpackager.conf</code>
         <td>mkdocs</td>
         <td>Should the documentation also be added to a ZIP file? (default is False)</td>
     </tr>
+    <tr>
+        <td>create_release</td>
+        <td>github</td>
+        <td>Should a new release automatically be created on GitHub (default is False)</td>
+    </tr>
+    <tr>
+        <td>owner</td>
+        <td>github</td>
+        <td>The account owner of the repo where the new release will be created (not case sensitive)</td>
+    </tr>
+    <tr>
+        <td>repo</td>
+        <td>github</td>
+        <td>The name of repository where the release will be created (not case sensitive)</td>
+    </tr>
+    <tr>
+        <td>token</td>
+        <td>github</td>
+        <td>The GitHub authorization token that will be used to create the new release</td>
+    </tr>
+    <tr>
+        <td>commit</td>
+        <td>github</td>
+        <td>Specifies the commitish value that determines where the Git tag is created from. Can be any branch or commit SHA</td>
+    </tr>
+    <tr>
+        <td>release_notes</td>
+        <td>github</td>
+        <td>A path to the release notes used for the new release</td>
+    </tr>
 <table>
+
+## Github API Token
+You need to create a new token before you can automate releases on GitHub. You can follow this guide: https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token. It's important that the Contents repository permission is enabled, otherwise all releases will fail
 
 ## Using the tool
 <ol>
