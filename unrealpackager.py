@@ -5,6 +5,7 @@ import os
 import sys
 import json
 import shutil
+import requests
 import subprocess
 import configparser
 
@@ -21,6 +22,12 @@ class Config:
     mkdocs_auto_deploy = False
     mkdocs_include_pdf = False
     mkdocs_create_zip = False
+    github_create_release = False
+    github_owner = ""
+    github_repo = ""
+    github_token = ""
+    github_commit = ""
+    github_release_notes = ""
 
     def __init__(self):
         config = configparser.ConfigParser()
@@ -35,6 +42,12 @@ class Config:
         self.mkdocs_auto_deploy = config.get("mkdocs", "auto_deploy", fallback="false").replace(" ", "").lower() != "false"
         self.mkdocs_include_pdf = config.get("mkdocs", "include_pdf", fallback="false").replace(" ", "").lower() != "false"
         self.mkdocs_create_zip = config.get("mkdocs", "create_zip", fallback="false").replace(" ", "").lower() != "false"
+        self.github_create_release = config.get("github", "create_release", fallback="false").replace(" ", "").lower() != "false"
+        self.github_owner = config.get("github", "owner", fallback="")
+        self.github_repo = config.get("github", "repo", fallback="")
+        self.github_token = config.get("github", "token", fallback="")
+        self.github_commit = config.get("github", "commit", fallback="")
+        self.github_release_notes = config.get("github", "release_notes", fallback="")
 
     def verify(self):
         """ Verify the values extracted from the configuration file """
@@ -60,15 +73,32 @@ class Config:
         if not self.output or self.output.isspace():
             raise Exception("Output path not specified in config file")
         self.output = os.path.abspath(self.output)
-        if self.mkdocs_auto_deploy or self.mkdocs_include_pdf or mkdocs_create_zip:
+        if os.path.exists(self.output):
+            shutil.rmtree(self.output)
+        if self.mkdocs_auto_deploy or self.mkdocs_include_pdf or self.mkdocs_create_zip:
             self.mkdocs_path = os.path.abspath(self.mkdocs_path)
             if not os.path.exists(os.path.join(self.mkdocs_path, "mkdocs.yml")):
                 raise Exception("Mkdocs integration is enabled but the mkdocs.yml file could not be found")
+        if self.github_create_release:
+            if not self.github_owner or self.github_owner.isspace():
+                raise Exception("Github release is enabled but owner is not specified in config file")
+            if not self.github_repo or self.github_repo.isspace():
+                raise Exception("Github release is enabled but repo is not specified in config file")
+            if not self.github_token or self.github_token.isspace():
+                raise Exception("Github release is enabled but token is not specified in config file")
+            if not self.github_commit or self.github_commit.isspace():
+                raise Exception("Github release is enabled but commit is not specified in config file")
+            if not self.github_release_notes or self.github_release_notes.isspace():
+                raise Exception("Github release is enabled but release notes file is not specified in config file")
+            self.github_release_notes = os.path.abspath(self.github_release_notes)
+            if not os.path.exists(self.github_release_notes):
+                raise Exception("Release notes file could not be found")
 
 
 class Plugin:
     """ Class containing information about the plugin """
     path = ""
+    version = ""
     build_path_without_ue_version = ""
     documentation_pdf_path = ""
     documentation_website_path = ""
@@ -77,11 +107,11 @@ class Plugin:
         with open(plugin) as plugin_file:
             plugin_data = json.load(plugin_file)
         name = plugin_data['FriendlyName'].replace(" ", "")
-        version = plugin_data['VersionName']
+        self.version = plugin_data['VersionName']
         self.path = plugin
-        self.build_path_without_ue_version = os.path.join(output, f"{name}-UE-v{version}")
-        self.documentation_pdf_path = os.path.join(output, f"{name}Documentation-v{version}.pdf")
-        self.documentation_website_path = os.path.join(output, f"{name}Documentation-v{version}.zip")
+        self.build_path_without_ue_version = os.path.join(output, f"{name}-UE-v{self.version}")
+        self.documentation_pdf_path = os.path.join(output, f"{name}Documentation-v{self.version}.pdf")
+        self.documentation_website_path = os.path.join(output, f"{name}Documentation-v{self.version}.zip")
 
     def getbuildpath(self, unreal_version):
         """ Get the output directory for the build using a specific version of Unreal Engine """
@@ -125,7 +155,7 @@ config.verify()
 
 print()
 print("==============================================")
-print("| Unreal Packager v1.1.0                     |")
+print("| Unreal Packager v1.2.0                     |")
 print("| Created by Henry Jooste                    |")
 print("| https://github.com/hfjooste/UnrealPackager |")
 print("==============================================")
@@ -138,7 +168,7 @@ for unreal_version in config.unreal_versions:
 
 if config.mkdocs_auto_deploy:
     print("Deploying documentation")
-    subprocess.run(rf'mkdocs gh-deploy --config-file "{os.path.join(config.mkdocs_path, "mkdocs.yml")}"')
+    subprocess.run(rf'mkdocs gh-deploy --force --config-file "{os.path.join(config.mkdocs_path, "mkdocs.yml")}"')
 
 if config.mkdocs_include_pdf:
     print("Copying documentation PDF to output directory")
@@ -158,4 +188,32 @@ if config.mkdocs_create_zip:
         os.remove(plugin.documentation_website_path)
     shutil.make_archive(site, "zip", site)
     shutil.move(f"{site}.zip", plugin.documentation_website_path)
-    
+
+if config.github_create_release:
+    print()
+    print("Creating new release on GitHub")
+    with open(config.github_release_notes, mode="r") as release_notes_file:
+        release_notes = release_notes_file.read()
+    url = f"https://api.github.com/repos/{config.github_owner}/{config.github_repo}/releases"
+    data = { "tag_name" : plugin.version, "target_commitish": config.github_commit, "name" : f"Version {plugin.version}", "body" : release_notes }
+    headers = { 'Accept' : 'application/vnd.github+json', 'Authorization' : f'Bearer {config.github_token}', 'X-GitHub-Api-Version': '2022-11-28'}
+    response = requests.post(url, data=json.dumps(data), headers=headers)
+    if not response.ok:
+        print(response.content)
+        raise Exception("Failed to create new release on Github")
+    release = json.loads(response.content)
+    release_id = release['id']
+    for file_name in os.listdir(config.output):
+        file_path = os.path.join(config.output, file_name)
+        if os.path.isfile(file_path):
+            print(f"Uploading {file_name}")
+            with open(file_path, mode="rb") as release_file:
+                content = release_file.read()
+            url = f'https://uploads.github.com/repos/{config.github_owner}/{config.github_repo}/releases/{release_id}/assets?name={file_name}'
+            headers = { 'Accept' : 'application/vnd.github+json', 'Authorization' : f'Bearer {config.github_token}', 'X-GitHub-Api-Version': '2022-11-28', 'Content-Type': 'application/octet-stream' }
+            response = requests.post(url, data=content, headers=headers)
+            if not response.ok:
+                print(response.content)
+                raise Exception(f"Failed to upload {file_name}")
+    release_url = release['html_url']
+    print(f"Release created: {release_url}")
