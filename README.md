@@ -1,5 +1,5 @@
 # Unreal Packager
-Automate packaging Unreal Engine projects and plugins. It also supports multiple platforms (projects) and multiple multiple engine versions (plugins)
+Automate packaging Unreal Engine projects and plugins. It also supports multiple platforms (projects) and multiple engine versions (plugins)
 
 ## Requirements
 Python 3 is required to run the tool. You can find more information on how to set it up here: https://www.python.org.
