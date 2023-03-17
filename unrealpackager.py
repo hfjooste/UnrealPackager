@@ -2,7 +2,6 @@
 # https://github.com/hfjooste/UnrealPackager
 
 import os
-import sys
 import json
 import shutil
 import requests
@@ -13,11 +12,13 @@ import configparser
 class Config:
     """ Helper class used to read the config file, extract values and verify the configuration """
     unreal_install_dir = ""
-    unreal_versions = []
-    visual_studio = ""
-    plugin = ""
     output = ""
-    create_zip = True
+    project_path = ""
+    project_platforms = []
+    project_unreal_version = ""
+    plugin_path = ""
+    plugin_unreal_versions = []
+    plugin_visual_studio = ""
     mkdocs_path = ""
     mkdocs_auto_deploy = False
     mkdocs_include_pdf = False
@@ -33,11 +34,13 @@ class Config:
         config = configparser.ConfigParser()
         config.read("unrealpackager.conf")
         self.unreal_install_dir = config.get("environment", "unreal_install_dir", fallback="")
-        self.unreal_versions = list(filter(None, config.get("environment", "unreal_versions", fallback="").replace(" ", "").split(",")))
-        self.visual_studio = config.get("environment", "visual_studio", fallback="2019")
-        self.plugin = config.get("project", "plugin", fallback="")
-        self.output = config.get("project", "output", fallback="")
-        self.create_zip = config.get("project", "create_zip", fallback="true").replace(" ", "").lower() != "false"
+        self.output = config.get("environment", "output", fallback="")
+        self.project_path = config.get("project", "path", fallback="")
+        self.project_platforms = list(filter(None, config.get("project", "platforms", fallback="").replace(" ", "").split(",")))
+        self.project_unreal_version = config.get("project", "unreal_version", fallback="")
+        self.plugin_path = config.get("plugin", "path", fallback="")
+        self.plugin_unreal_versions = list(filter(None, config.get("plugin", "unreal_versions", fallback="").replace(" ", "").split(",")))
+        self.plugin_visual_studio = config.get("plugin", "visual_studio", fallback="2019")
         self.mkdocs_path = config.get("mkdocs", "path", fallback=".")
         self.mkdocs_auto_deploy = config.get("mkdocs", "auto_deploy", fallback="false").replace(" ", "").lower() != "false"
         self.mkdocs_include_pdf = config.get("mkdocs", "include_pdf", fallback="false").replace(" ", "").lower() != "false"
@@ -56,25 +59,39 @@ class Config:
         self.unreal_install_dir = os.path.abspath(self.unreal_install_dir)
         if not os.path.exists(self.unreal_install_dir):
             raise Exception("Invalid Unreal Engine installation directory")
-        if not self.unreal_versions:
-            raise Exception("No Unreal Engine versions specified in config file")
-        for unreal_version in self.unreal_versions:
-            if not os.path.exists(os.path.join(self.unreal_install_dir, f"UE_{unreal_version}")):
-                raise Exception(f"Unreal Engine {unreal_version} is not installed")
-        if not self.visual_studio.isdigit():
-            raise Exception("Invalid Visual Studio version number provided. Only integers are allowed")
-        if not self.plugin or self.plugin.isspace():
-            raise Exception("Plugin path not specified in config file")
-        self.plugin = os.path.abspath(self.plugin)
-        if not os.path.exists(self.plugin):
-            raise Exception("Plugin does not exist")
-        if not self.plugin.endswith(".uplugin"):
-            raise Exception("Invalid plugin path. Must end with .uplugin")
         if not self.output or self.output.isspace():
             raise Exception("Output path not specified in config file")
         self.output = os.path.abspath(self.output)
         if os.path.exists(self.output):
             shutil.rmtree(self.output)
+        if self.plugin_path and not self.plugin_path.isspace():
+            self.plugin_path = os.path.abspath(self.plugin_path)
+            if not os.path.exists(self.plugin_path):
+                raise Exception("Plugin does not exist")
+            if not self.plugin_path.endswith(".uplugin"):
+                raise Exception("Invalid plugin path. Must end with .uplugin")
+            if not self.plugin_unreal_versions:
+                raise Exception("No Unreal Engine versions specified in config file")
+            for unreal_version in self.plugin_unreal_versions:
+                if not os.path.exists(os.path.join(self.unreal_install_dir, f"UE_{unreal_version}")):
+                    raise Exception(f"Unreal Engine {unreal_version} is not installed")
+            if not self.plugin_visual_studio.isdigit():
+                raise Exception("Invalid Visual Studio version number provided. Only integers are allowed")
+        if self.project_path and not self.project_path.isspace():
+            self.project_path = os.path.abspath(self.project_path)
+            if not os.path.exists(self.project_path):
+                raise Exception("Project does not exist")
+            if not self.project_path.endswith(".uproject"):
+                raise Exception("Invalid project path. Must end with .uproject")
+            if not self.project_platforms:
+                raise Exception("No Unreal Engine versions specified in config file")
+            for platform in self.project_platforms:
+                if platform not in [ "Win64", "HoloLens", "Mac", "IOS", "Android", "Linux", "LinuxArm64", "TVOS"]:
+                    raise Exception(f"{platform} is not a supported platform. Only Win64, HoloLens, Mac, IOS, Android, Linux, LinuxArm64 and TVOS is supported")
+            if not self.project_unreal_version or self.project_unreal_version.isspace():
+                raise Exception("No Unreal Engine versions specified in config file")
+            if not os.path.exists(os.path.join(self.unreal_install_dir, f"UE_{self.project_unreal_version}")):
+                raise Exception(f"Unreal Engine {self.project_unreal_version} is not installed")
         if self.mkdocs_auto_deploy or self.mkdocs_include_pdf or self.mkdocs_create_zip:
             self.mkdocs_path = os.path.abspath(self.mkdocs_path)
             if not os.path.exists(os.path.join(self.mkdocs_path, "mkdocs.yml")):
@@ -118,18 +135,35 @@ class Plugin:
         return self.build_path_without_ue_version.replace("-UE-v", f"-UE{unreal_version}-v")
 
 
+class Project:
+    """ Class containing information about the project """
+    path = ""
+    name = ""
+    version = ""
+    build_path = ""
+
+    def __init__(self, project, output):
+        config = configparser.ConfigParser()
+        config.read(os.path.join(os.path.dirname(project), "Config", "DefaultGame.ini"))
+        self.path = project
+        self.name = config.get("/Script/EngineSettings.GeneralProjectSettings", "ProjectName", fallback="UnrealProject").replace(" ", "")
+        self.version = config.get("/Script/EngineSettings.GeneralProjectSettings", "ProjectVersion", fallback="1.0.0")
+        self.build_path = os.path.join(output, f"{self.name}-v{self.version}-PLATFORM_ID")
+
+    def getbuildpath(self, platform):
+        """ Get the output directory for the build using a specific platform """
+        return self.build_path.replace("-PLATFORM_ID", f"-{platform}")
+
 class UnrealPackager:
-    """ Automate packaging an Unreal Engine plugin """
+    """ Automate packaging an Unreal Engine projects and plugins """
     unreal_install_dir = ""
     unreal_version = ""
-    visual_studio = ""
 
-    def __init__(self, unreal_install_dir, unreal_version, visual_studio):
+    def __init__(self, unreal_install_dir, unreal_version):
         self.unreal_install_dir = unreal_install_dir
         self.unreal_version = unreal_version
-        self.visual_studio = visual_studio
 
-    def package(self, plugin, create_zip):
+    def package_plugin(self, plugin, visual_studio):
         """ Package the plugin """
         output = plugin.getbuildpath(self.unreal_version)
         print()
@@ -140,14 +174,32 @@ class UnrealPackager:
         if os.path.exists(output):
             shutil.rmtree(output)
         script = rf'{self.unreal_install_dir}\\UE_{self.unreal_version}\\Engine\\Build\\BatchFiles\\RunUAT.bat'
-        command = rf'"{script}" BuildPlugin -Plugin="{plugin.path}" -Package="{output}" -VS{self.visual_studio} -Rocket'
-        print(f"Executing command: {command}")
+        command = rf'"{script}" BuildPlugin -Plugin="{plugin.path}" -Package="{output}" -VS{visual_studio} -Rocket'
+        print(f"Executing command : {command}")
         print()
         subprocess.run(command)
-        if create_zip:
-            if os.path.exists(f"{output}.zip"):
-                os.remove(f"{output}.zip")
-            shutil.make_archive(output, "zip", output)
+        if os.path.exists(f"{output}.zip"):
+            os.remove(f"{output}.zip")
+        shutil.make_archive(output, "zip", output)
+            
+
+    def package_project(self, project, platform):
+        """ Package the project """
+        output = project.getbuildpath(platform)
+        print()
+        print(f"Packaging project using Unreal Engine {self.unreal_version}")
+        print(f"Plugin : {project.path}")
+        print(f"Output : {output}")
+        print()
+        if os.path.exists(output):
+            shutil.rmtree(output)
+        script = rf'{self.unreal_install_dir}\\UE_{self.unreal_version}\\Engine\\Build\\BatchFiles\\RunUAT.bat'
+        command = rf'"{script}" BuildCookRun -project="{project.path}" -targetplatform={platform} -cook -allmaps -build -stage -pak -archive -archivedirectory="{output}"'
+        print(f"Executing command : {command}")
+        subprocess.run(command)
+        if os.path.exists(f"{output}.zip"):
+            os.remove(f"{output}.zip")
+        shutil.make_archive(output, "zip", output)
 
 
 config = Config()
@@ -155,16 +207,23 @@ config.verify()
 
 print()
 print("==============================================")
-print("| Unreal Packager v1.2.0                     |")
+print("| Unreal Packager v2.0.0                     |")
 print("| Created by Henry Jooste                    |")
 print("| https://github.com/hfjooste/UnrealPackager |")
 print("==============================================")
 print()
 
-plugin = Plugin(config.plugin, config.output)
-for unreal_version in config.unreal_versions:
-    packager = UnrealPackager(config.unreal_install_dir, unreal_version, config.visual_studio)
-    packager.package(plugin, config.create_zip)
+if config.plugin_path and not config.plugin_path.isspace():
+    plugin = Plugin(config.plugin_path, config.output)
+    for unreal_version in config.plugin_unreal_versions:
+        packager = UnrealPackager(config.unreal_install_dir, unreal_version)
+        packager.package_plugin(plugin, config.plugin_visual_studio)
+
+if config.project_path and not config.project_path.isspace():
+    project = Project(config.project_path, config.output)
+    for platform in config.project_platforms:
+        packager = UnrealPackager(config.unreal_install_dir, config.project_unreal_version)
+        packager.package_project(project, platform)
 
 if config.mkdocs_auto_deploy:
     print("Deploying documentation")

@@ -1,5 +1,5 @@
 # Unreal Packager
-Automate packaging Unreal Engine plugins for multiple engine versions
+Automate packaging Unreal Engine projects and plugins. It also supports multiple platforms (projects) and multiple multiple engine versions (plugins)
 
 ## Requirements
 Python 3 is required to run the tool. You can find more information on how to set it up here: https://www.python.org.
@@ -21,29 +21,39 @@ The configuration for the tool is stored in the <code>unrealpackager.conf</code>
         <td>The directory where all Unreal Engine builds are installed</td>
     </tr>
     <tr>
-        <td>unreal_versions</td>
+        <td>output</td>
         <td>environment</td>
+        <td>The path where the packaged builds will be stored</td>
+    </tr>
+    <tr>
+        <td>path</td>
+        <td>project</td>
+        <td>The path to the uproject file</td>
+    </tr>
+    <tr>
+        <td>platforms</td>
+        <td>project</td>
+        <td>A comma-seperated list of all supported platforms (Win64, HoloLens, Mac, IOS, Android, Linux, LinuxArm64 and TVOS)</td>
+    </tr>
+    <tr>
+        <td>unreal_version</td>
+        <td>project</td>
+        <td>The version of Unreal Engine used to build the project</td>
+    </tr>
+    <tr>
+        <td>path</td>
+        <td>plugin</td>
+        <td>The path to the uplugin file</td>
+    </tr>
+    <tr>
+        <td>unreal_versions</td>
+        <td>plugin</td>
         <td>A comma-seperated list of all Unreal Engine versions used to build the plugin</td>
     </tr>
     <tr>
         <td>visual_studio</td>
-        <td>environment</td>
-        <td>The version of Visual Studio used to compile the plugin (VS2019 is used by default)</td>
-    </tr>
-    <tr>
         <td>plugin</td>
-        <td>project</td>
-        <td>The path to the uplugin file</td>
-    </tr>
-    <tr>
-        <td>output</td>
-        <td>project</td>
-        <td>The path where the packaged builds will be stored</td>
-    </tr>
-    <tr>
-        <td>create_zip</td>
-        <td>project</td>
-        <td>Should the release also be added to a ZIP file? (default is True)</td>
+        <td>The version of Visual Studio used to compile the plugin (VS2019 is used by default)</td>
     </tr>
     <tr>
         <td>path</td>
