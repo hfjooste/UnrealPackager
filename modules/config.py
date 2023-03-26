@@ -1,3 +1,6 @@
+# Created by Henry Jooste
+# https://github.com/hfjooste/UnrealPackager
+
 import os
 import shutil
 import configparser
@@ -23,6 +26,8 @@ class Config:
     github_token = ""
     github_commit = ""
     github_release_notes = ""
+    task_pre = None
+    task_post = None
 
     def __init__(self):
         config = configparser.ConfigParser()
@@ -45,6 +50,8 @@ class Config:
         self.github_token = config.get("github", "token", fallback="")
         self.github_commit = config.get("github", "commit", fallback="")
         self.github_release_notes = config.get("github", "release_notes", fallback="")
+        self.task_pre = config.get("tasks", "pre", fallback=None)
+        self.task_post = config.get("tasks", "post", fallback=None)
         self.verify()
 
     def verify(self):
@@ -105,3 +112,15 @@ class Config:
             self.github_release_notes = os.path.abspath(self.github_release_notes)
             if not os.path.exists(self.github_release_notes):
                 raise Exception("Release notes file could not be found")
+        if self.task_pre and not self.task_pre.isspace():
+            self.task_pre = os.path.abspath(os.path.join(os.path.dirname(__file__), "..\\", self.task_pre))
+            if not os.path.exists(self.task_pre):
+                raise Exception(f"Pre-task {self.task_pre} does not exist")
+            if not self.task_pre.endswith(".py"):
+                raise Exception("Invalid pre-task. Only Python scripts are currently supported")
+        if self.task_post and not self.task_post.isspace():
+            self.task_post = os.path.abspath(os.path.join(os.path.dirname(__file__), "..\\", self.task_post))
+            if not os.path.exists(self.task_post):
+                raise Exception(f"Post-task {self.task_post} does not exist")
+            if not self.task_post.endswith(".py"):
+                raise Exception("Invalid post-task. Only Python scripts are currently supported")

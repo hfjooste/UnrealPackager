@@ -5,7 +5,7 @@ from modules.setup import *
 
 print()
 print("==============================================")
-print("| Unreal Packager v3.0.0                     |")
+print("| Unreal Packager v3.1.0                     |")
 print("| Created by Henry Jooste                    |")
 print("| https://github.com/hfjooste/UnrealPackager |")
 print("==============================================")
@@ -20,9 +20,11 @@ from modules.config import Config
 args = Args()
 config = Config()
 
+run_pre_task(config)
 package_plugin(config)
 package_project(config)
 deploy_docs(config)
 save_docs_pdf(config)
 create_docs_zip(config)
 create_release(args, config)
+run_post_task(config)

@@ -154,6 +154,16 @@ The configuration for the tool is stored in the <code>unrealpackager.conf</code>
         <td>github</td>
         <td>A path to the release notes used for the new release</td>
     </tr>
+    <tr>
+        <td>pre</td>
+        <td>tasks</td>
+        <td>The relative path to a Python script that is executed before building the projects</td>
+    </tr>
+    <tr>
+        <td>post</td>
+        <td>tasks</td>
+        <td>The relative path to a Python script that is executed after deploying the projects</td>
+    </tr>
 <table>
 
 ## Github API Token

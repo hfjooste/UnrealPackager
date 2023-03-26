@@ -1,3 +1,6 @@
+# Created by Henry Jooste
+# https://github.com/hfjooste/UnrealPackager
+
 import os
 import shutil
 import requests
@@ -5,6 +8,19 @@ import subprocess
 from modules.packager import Packager
 from modules.plugin import Plugin
 from modules.project import Project
+
+
+def run_pre_task(config):
+    """ Run the pre-task """
+    if config.task_pre and not config.task_pre.isspace():
+        print("Running pre-task")
+        os.system(f"python \"{config.task_pre}\"")
+
+def run_post_task(config):
+    """ Run the post-task """
+    if config.task_post and not config.task_post.isspace():
+        print("Running post-task")
+        os.system(f"python \"{config.task_post}\"")
 
 
 def package_plugin(config):

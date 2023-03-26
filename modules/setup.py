@@ -1,3 +1,6 @@
+# Created by Henry Jooste
+# https://github.com/hfjooste/UnrealPackager
+
 import os
 import subprocess
 
