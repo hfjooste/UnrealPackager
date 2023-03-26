@@ -1,11 +1,60 @@
 # Unreal Packager
-Automate packaging Unreal Engine projects and plugins. It also supports multiple platforms (projects) and multiple multiple engine versions (plugins)
+Automate packaging Unreal Engine projects and plugins. It also supports multiple platforms (projects) and multiple multiple engine versions (plugins). The tool can also be used to deploy documentation using Mkdocs and upload new releases to GitHub
 
 ## Requirements
 Python 3 is required to run the tool. You can find more information on how to set it up here: https://www.python.org.
 
+Unreal Packager relies on a few external packages. It will automatically check the dependencies when you run the script and offer to install the missing dependencies. Pip is required to install these packages. You can find more information on how to set it up here: https://pip.pypa.io/en/stable/installation/
+
 ## Supported Unreal Engine Versions
 Only Unreal Engine 5.0 and 5.1 is supported, but it should work on earlier versions (not tested)
+
+## Arguments
+The following arguments can be specified to override the values specified in the config file:
+<table>
+    <tr>
+        <th>Argument</th>
+        <th>Optional</th>
+        <th>Description</th>
+        <th>Default Value</th>
+    </tr>
+    <tr>
+        <td>--help</td>
+        <td>Yes</td>
+        <td>Get a list of all available arguments</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>--version</td>
+        <td>Yes</td>
+        <td>Check the version number of Unreal Packager</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>--gh-version</td>
+        <td>Yes</td>
+        <td>Specify the version used on GitHub</td>
+        <td>Extracted from project file</td>
+    </tr>
+    <tr>
+        <td>--gh-tag</td>
+        <td>Yes</td>
+        <td>Specify the tag used on GitHub</td>
+        <td>Extracted from project file</td>
+    </tr>
+    <tr>
+        <td>--gh-commit</td>
+        <td>Yes</td>
+        <td>Specify the commit or branch used when creating the tag on GitHub</td>
+        <td>Extracted from config file</td>
+    </tr>
+    <tr>
+        <td>--gh-prerelease</td>
+        <td>Yes</td>
+        <td>Should the release be marked as a pre-release on GitHub?</td>
+        <td>True</td>
+    </tr>
+</table>
 
 ## Configuration
 The configuration for the tool is stored in the <code>unrealpackager.conf</code> file. The following settings can be configured in this file:
@@ -112,11 +161,10 @@ You need to create a new token before you can automate releases on GitHub. You c
 
 ## Using the tool
 <ol>
-    <li>Download the latest release from <a href="https://github.com/hfjooste/UnrealPackager/releases" target="_blank">GitHub</a></li>
-    <li>Copy the <code>unrealpackager.py</code> and <code>unrealpackager.conf</code> files to your project (optional)
+    <li>Download the latest release from <a href="https://github.com/hfjooste/UnrealPackager/releases" target="_blank">GitHub</a> or add the project as a submodule (<code>git submodule add git@github.com:hfjooste/UnrealPackager.git</code>)</li>
     <li>Update the <code>unrealpackager.conf</code> with your project details</li>
-    <li>Run the tool: <code>python3 unrealpackager.py</code></li>
+    <li>Run the tool: <code>python unrealpackager.py</code></li>
 </ol>
 
 ## Support
-If you have any questions, feel free to contact me through <a href="https://mastodon.social/@hfjooste" target="_blank">Mastodon</a> or send me an email at <a href="mailto:henryjooste95@gmail.com?subject=Unreal%20Packager">henryjooste95@gmail.com</a>. You can also use the Discussions or Issues tab on GitHub to discuss problems/features or report any issues
+If you have any questions, feel free to contact me through <a href="https://twitter.com/hfjooste" target="_blank">Twitter</a> or <a href="https://mastodon.social/@hfjooste" target="_blank">Mastodon</a>. You can also send me an email at <a href="mailto:henryjooste95@gmail.com?subject=Unreal%20Packager">henryjooste95@gmail.com</a>
