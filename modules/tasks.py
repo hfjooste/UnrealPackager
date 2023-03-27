@@ -2,6 +2,7 @@
 # https://github.com/hfjooste/UnrealPackager
 
 import os
+import json
 import shutil
 import requests
 import subprocess
@@ -45,6 +46,26 @@ def deploy_docs(config):
         print("Deploying documentation")
         subprocess.run(rf'mkdocs gh-deploy --force --config-file "{os.path.join(config.mkdocs_path, "mkdocs.yml")}"')
 
+def get_documentation_pdf_path(config):
+    """ Get the path to the documentation PDF """
+    if config.plugin_path and not config.plugin_path.isspace():
+        plugin = Plugin(config.plugin_path, config.output)
+        return os.path.join(config.output, f"{plugin.name}Documentation-v{plugin.version}.pdf")
+    if config.project_path and not config.project_path.isspace():
+        project = Project(config.project_path, config.output)
+        return os.path.join(config.output, f"{project.name}Documentation-v{project.version}.pdf")
+    return os.path.join(config.output, f"Documentation.pdf")
+
+def get_documentation_website_path(config):
+    """ Get the path to the documentation website archive """
+    if config.plugin_path and not config.plugin_path.isspace():
+        plugin = Plugin(config.plugin_path, config.output)
+        return os.path.join(config.output, f"{plugin.name}Documentation-v{plugin.version}.zip")
+    if config.project_path and not config.project_path.isspace():
+        project = Project(config.project_path, config.output)
+        return os.path.join(config.output, f"{project.name}Documentation-v{project.version}.zip")
+    return os.path.join(config.output, f"Documentation.zip")
+
 def save_docs_pdf(config):
     """ Save the documentation PDF """
     if not config.mkdocs_include_pdf:
@@ -53,9 +74,10 @@ def save_docs_pdf(config):
     pdf = os.path.join(config.mkdocs_path, "site\\pdf\\document.pdf")
     if not os.path.exists(pdf):
         raise Exception("PDF file could not be found")
-    if os.path.exists(plugin.documentation_pdf_path):
-        os.remove(plugin.documentation_pdf_path)
-    shutil.copy2(pdf, plugin.documentation_pdf_path)
+    documentation_pdf_path = get_documentation_pdf_path(config)
+    if os.path.exists(documentation_pdf_path):
+        os.remove(documentation_pdf_path)
+    shutil.copy2(pdf, documentation_pdf_path)
 
 def create_docs_zip(config):
     """ Create a ZIP of the documentation website """
@@ -65,10 +87,11 @@ def create_docs_zip(config):
     site = os.path.join(config.mkdocs_path, "site")
     if not os.path.exists(site):
         raise Exception("Documentation could not be found")
-    if os.path.exists(plugin.documentation_website_path):
-        os.remove(plugin.documentation_website_path)
+    documentation_website_path = get_documentation_website_path(config)
+    if os.path.exists(documentation_website_path):
+        os.remove(documentation_website_path)
     shutil.make_archive(site, "zip", site)
-    shutil.move(f"{site}.zip", plugin.documentation_website_path)
+    shutil.move(f"{site}.zip", documentation_website_path)
 
 def create_release(args, config):
     """ Create a release on GitHub """
@@ -78,10 +101,21 @@ def create_release(args, config):
     with open(config.github_release_notes, mode="r") as release_notes_file:
         release_notes = release_notes_file.read()
     url = f"https://api.github.com/repos/{config.github_owner}/{config.github_repo}/releases"
-    version = plugin.version
+    plugin = None
+    if config.plugin_path and not config.plugin_path.isspace():
+        plugin = Plugin(config.plugin_path, config.output)
+    project = None
+    if config.project_path and not config.project_path.isspace():
+        project = Project(config.project_path, config.output)
+    release = ""
+    if plugin != None:
+        release = plugin.version
+    elif project != None:
+        release = project.version
+    version = release
     if args.github_version and not args.github_version.isspace():
         version = args.github_version.strip()
-    tag = plugin.version
+    tag = release
     if args.github_tag and not args.github_tag.isspace():
         tag = args.github_tag.strip()
     commit = config.github_commit

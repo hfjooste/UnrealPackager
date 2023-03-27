@@ -66,6 +66,7 @@ class Config:
         self.output = os.path.abspath(self.output)
         if os.path.exists(self.output):
             shutil.rmtree(self.output)
+        os.makedirs(self.output, exist_ok=True)
         if self.plugin_path and not self.plugin_path.isspace():
             self.plugin_path = os.path.abspath(self.plugin_path)
             if not os.path.exists(self.plugin_path):

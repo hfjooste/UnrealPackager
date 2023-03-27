@@ -35,7 +35,7 @@ class Packager:
         """ Package the project """
         output = project.getbuildpath(platform)
         print(f"\nPackaging project using Unreal Engine {self.unreal_version}")
-        print(f"Plugin : {project.path}")
+        print(f"Project : {project.path}")
         print(f"Output : {output}")
         if os.path.exists(output):
             shutil.rmtree(output)

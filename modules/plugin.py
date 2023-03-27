@@ -7,21 +7,18 @@ import json
 
 class Plugin:
     """ Class containing information about the plugin """
+    name = ""
     path = ""
     version = ""
     build_path_without_ue_version = ""
-    documentation_pdf_path = ""
-    documentation_website_path = ""
 
     def __init__(self, plugin, output):
         with open(plugin) as plugin_file:
             plugin_data = json.load(plugin_file)
-        name = plugin_data['FriendlyName'].replace(" ", "")
+        self.name = plugin_data['FriendlyName'].replace(" ", "")
         self.version = plugin_data['VersionName']
         self.path = plugin
-        self.build_path_without_ue_version = os.path.join(output, f"{name}-UE-v{self.version}")
-        self.documentation_pdf_path = os.path.join(output, f"{name}Documentation-v{self.version}.pdf")
-        self.documentation_website_path = os.path.join(output, f"{name}Documentation-v{self.version}.zip")
+        self.build_path_without_ue_version = os.path.join(output, f"{self.name}-UE-v{self.version}")
 
     def getbuildpath(self, unreal_version):
         """ Get the output directory for the build using a specific version of Unreal Engine """
