@@ -5,7 +5,7 @@ from modules.setup import *
 
 print()
 print("==============================================")
-print("| Unreal Packager v3.1.1                     |")
+print("| Unreal Packager v3.2.0                     |")
 print("| Created by Henry Jooste                    |")
 print("| https://github.com/hfjooste/UnrealPackager |")
 print("==============================================")

@@ -25,7 +25,9 @@ class Packager:
         script = rf'{self.unreal_install_dir}\\UE_{self.unreal_version}\\Engine\\Build\\BatchFiles\\RunUAT.bat'
         command = rf'"{script}" BuildPlugin -Plugin="{plugin.path}" -Package="{output}" -VS{visual_studio} -Rocket'
         print(f"\nExecuting command : {command}\n")
-        subprocess.run(command)
+        result = subprocess.run(command)
+        if result.returncode != 0:
+            raise Exception(f"Failed to package plugin. Error code: {result.returncode}")
         if os.path.exists(f"{output}.zip"):
             os.remove(f"{output}.zip")
         shutil.make_archive(output, "zip", output)
@@ -42,7 +44,9 @@ class Packager:
         script = rf'{self.unreal_install_dir}\\UE_{self.unreal_version}\\Engine\\Build\\BatchFiles\\RunUAT.bat'
         command = rf'"{script}" BuildCookRun -project="{project.path}" -targetplatform={platform} -cook -allmaps -build -stage -pak -archive -archivedirectory="{output}"'
         print(f"\nExecuting command : {command}\n")
-        subprocess.run(command)
+        result = subprocess.run(command)
+        if result.returncode != 0:
+            raise Exception(f"Failed to package project. Error code: {result.returncode}")
         if os.path.exists(f"{output}.zip"):
             os.remove(f"{output}.zip")
         shutil.make_archive(output, "zip", output)
